@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/context
+       http://www.springframework.org/schema/context/spring-context.xsd
+       http://www.springframework.org/schema/aop
+       http://www.springframework.org/schema/aop/spring-aop.xsd
+       http://www.springframework.org/schema/tx
+       http://www.springframework.org/schema/tx/spring-tx.xsd">
+	<!-- 让spring加载db.properties -->
+	<context:property-placeholder
+		location="classpath:db.properties" />
+
+	<!-- 配置数据源 -->
+	<bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource" destroy-method="close">
+		<property name="driverClass" value="${jdbc.driver}"></property>
+		<property name="jdbcUrl" value="${jdbc.url}"></property>
+		<property name="user" value="${jdbc.user}"></property>
+		<property name="password" value="${jdbc.password}"></property>
+	</bean>
+
+	<!-- 配置spring和mybaits整合 sqlSessionFactorBean -->
+	<bean id="sqlSessionFactory"  class="org.mybatis.spring.SqlSessionFactoryBean">
+		<!-- 注入数据源 -->
+		<property name="dataSource" ref="dataSource"></property>
+		<!-- 注入mybatis全局配置文件 -->
+		<property name="configLocation" value="classpath:mybatis/sqlMapConfig.xml"></property>
+	</bean>
+	
+	<!-- 配置扫描器  -->
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<!-- 注入需要扫描的包 -->
+		<property name="basePackage" value="com.yidu.hpc.dao"></property>
+		<!-- 注入会话工厂 -->
+		<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"></property>
+	</bean>
+	<!-- 配置一个可以批量插入的sqlSession -->
+	
+	<bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate">
+        <constructor-arg name="sqlSessionFactory" ref="sqlSessionFactory"></constructor-arg>
+        <constructor-arg name="executorType" value="BATCH"></constructor-arg>
+    </bean>
+
+
+	<!-- 配置事务管理器 -->
+	<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+			<property name="dataSource" ref="dataSource"></property>
+	</bean>
+	
+	<!-- 配置事务通知 -->
+	<tx:advice id="txAdvice" transaction-manager="transactionManager">
+		<tx:attributes>
+			<tx:method name="find" read-only="true"/>
+			<tx:method name="*" isolation="DEFAULT"/>
+		</tx:attributes>
+	</tx:advice>
+	
+	<!-- 配置增强 -->
+	<aop:config>
+		<aop:advisor advice-ref="txAdvice" pointcut="execution(* com.yidu.hpc.biz.ClientBiz.*(..))"/>
+	</aop:config>
+</beans>       

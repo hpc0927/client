@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+ "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yidu.hpc.dao.ClientMapper">
+	<select id="findAllClient"
+		resultType="com.yidu.hpc.domain.Client">
+		select 
+		<include refid="mysql"/> 
+		from t_client
+		<trim prefix="where" prefixOverrides="and">
+		userable = 1
+			 <if test="clientName!= null and clientName!=''">
+			and client_name LIKE CONCAT(CONCAT('%',#{clientName},'%'))
+			 </if>
+			  <if test="clientPhone!= null and clientPhone!=''">
+			and  client_Phone LIKE CONCAT(CONCAT('%',#{clientPhone},'%')) 	
+			 </if>
+		</trim>	 
+	</select>
+
+
+	<!-- 根据Id查询 -->
+	<select id="findClientById"
+		resultType="com.yidu.hpc.domain.Client">
+		select * from t_client where client_id =#{cid}
+	</select>
+	
+	
+	<!-- 新增客户 -->
+	<insert id="addClient"
+		parameterType="com.yidu.hpc.domain.Client">
+		insert into t_client
+		(client_id,client_name,client_phone,address,linkman,linkman_phone,linkman_address,description)
+		values(#{clientId},#{clientName},#{clientPhone},#{address},#{linkman},#{linkmanPhone},#{linkmanAddress},#{description});
+	</insert>
+	
+	<!-- 修改客户 -->
+	<update id="updateClietnById" parameterType="com.yidu.hpc.domain.Client">
+		update t_client set 
+		client_name = #{clientName},
+		client_phone=#{clientPhone},
+		address=#{address},
+		linkman=#{linkman},
+		linkman_phone=#{linkmanPhone},
+		description=#{linkmanAddress}
+		where client_id = #{clientId};
+	</update>
+	
+	<!-- 逻辑删除 -->
+	<update id="deleteClient">
+		update t_client set userable = 0 where client_id = #{cid}
+	</update>
+	
+
+	<sql id="mysql">
+		client_id,client_name,client_phone,address,linkman,linkman_phone,linkman_address,userable,description
+	</sql>
+</mapper>
